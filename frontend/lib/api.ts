@@ -1,8 +1,16 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Get API URL from environment with fallback
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+// ✅ FIXED: Get API URL from environment with production-ready fallback
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://velora-app-jkk5.onrender.com/api'  // Production fallback
+    : 'http://localhost:5001/api');               // Development fallback
+
+// Log the API URL in development for debugging
+if (process.env.NODE_ENV === 'development') {
+  console.log('🌐 API_URL:', API_URL);
+}
 
 // Create axios instance with default config
 export const api = axios.create({
