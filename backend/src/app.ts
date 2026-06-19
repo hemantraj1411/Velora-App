@@ -44,6 +44,7 @@ app.use(helmet({
 // ==================== UPDATED CORS CONFIGURATION ====================
 const allowedOrigins = [
   'http://localhost:3000',
+  'https://velora-app-three.vercel.app',
   'https://velora-app-mu.vercel.app',
   'https://velora-app-rust.vercel.app',
   'https://velora-app-ih0n.onrender.com'
