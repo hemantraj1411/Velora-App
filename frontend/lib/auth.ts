@@ -8,7 +8,8 @@ interface User {
   email: string;
   role: 'user' | 'premium' | 'admin';
   avatar?: string;
-  lastLoginAt: string;  // Added this field
+  lastLoginAt: string;
+  googleId?: string; // Added for Google OAuth users
   preferences: {
     theme: 'light' | 'dark';
     notifications: boolean;
@@ -103,7 +104,34 @@ class AuthService {
     removeAuthToken();
   }
 
-  // Login user
+  // ✅ NEW: Google Login - Redirects to Google OAuth
+  loginWithGoogle(): void {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL is not set');
+      return;
+    }
+    
+    const scope = 'email profile';
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    
+    // Redirect to backend's Google auth endpoint with scope parameter
+    window.location.href = `${apiUrl}/auth/google?scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  }
+
+  // ✅ NEW: Handle Google OAuth Callback
+  async handleGoogleCallback(code: string): Promise<User> {
+    try {
+      const response = await api.post<LoginResponse>("/auth/google/callback", { code });
+      const { token, refreshToken, user } = response.data;
+      this.setAuthData(token, refreshToken, user);
+      return user;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || "Google authentication failed");
+    }
+  }
+
+  // Login with email/password
   async login(email: string, password: string): Promise<User> {
     try {
       const response = await api.post<LoginResponse>("/auth/login", { email, password });
