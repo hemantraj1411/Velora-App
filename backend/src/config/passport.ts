@@ -7,12 +7,20 @@ export const setupPassport = (): void => {
   // Only setup Google OAuth if credentials are provided
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     try {
+      // ✅ FIXED: Use environment variable with production fallback
+      const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
+        (process.env.NODE_ENV === 'production' 
+          ? 'https://velora-backend.onrender.com/api/auth/google/callback'  // Your Render URL
+          : 'http://localhost:5000/api/auth/google/callback');
+
+      logger.info(`🔑 Google OAuth Callback URL: ${callbackURL}`);
+
       passport.use(
         new GoogleStrategy(
           {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
+            callbackURL: callbackURL,
           },
           async (accessToken, refreshToken, profile, done) => {
             try {
