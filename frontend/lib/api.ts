@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 // ✅ FIXED: Get API URL from environment with production-ready fallback
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 
   (process.env.NODE_ENV === 'production' 
-    ? 'https://velora-backend.onrender.com/api'  // ← REPLACE with your actual Render URL
+    ? 'https://velora-app-oo8o.onrender.com/api'  // ✅ CORRECT Render URL
     : 'http://localhost:5000/api');               // Development fallback
 
 // Log the API URL for debugging
