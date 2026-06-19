@@ -1,4 +1,6 @@
 "use client";
+import toast from "react-hot-toast"; // ✅ ADD THIS IMPORT
+
 
 import { api, setAuthToken, removeAuthToken } from "./api";
 
@@ -104,34 +106,66 @@ class AuthService {
     removeAuthToken();
   }
 
-  // ✅ NEW: Google Login - Redirects to Google OAuth
+  // ========== ✅ GOOGLE OAUTH METHODS ==========
+
+  // ✅ Initiate Google Login with proper scope
   loginWithGoogle(): void {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
-      console.error('NEXT_PUBLIC_API_URL is not set');
+      console.error('❌ NEXT_PUBLIC_API_URL is not set');
+      toast.error('Login service unavailable. Please try again later.');
       return;
     }
     
     const scope = 'email profile';
     const redirectUri = `${window.location.origin}/auth/callback`;
     
+    console.log('🔑 Initiating Google login with scope:', scope);
+    console.log('📡 Redirect URI:', redirectUri);
+    console.log('🌐 API URL:', apiUrl);
+    
     // Redirect to backend's Google auth endpoint with scope parameter
     window.location.href = `${apiUrl}/auth/google?scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
   }
 
-  // ✅ NEW: Handle Google OAuth Callback
-  async handleGoogleCallback(code: string): Promise<User> {
+  // ✅ Handle Google OAuth Callback - Updated to handle token from URL
+  async handleGoogleCallback(tokenOrCode: string): Promise<User> {
     try {
-      const response = await api.post<LoginResponse>("/auth/google/callback", { code });
+      console.log('📥 Handling Google callback with parameter:', tokenOrCode.substring(0, 15) + '...');
+      
+      // ✅ FIXED: Handle both token (from URL hash) and code (from backend)
+      if (tokenOrCode.includes('.')) {
+        // This is a JWT token - save it directly
+        console.log('✅ JWT token detected, saving directly');
+        const user = this.getUser();
+        if (user) {
+          this.setAuthData(tokenOrCode, this.getRefreshToken() || '', user);
+          return user;
+        } else {
+          // If no user exists, fetch profile
+          const profile = await this.getProfile();
+          return profile;
+        }
+      }
+      
+      // This is a code - exchange it with backend
+      console.log('🔄 Exchanging code for token...');
+      const response = await api.post<LoginResponse>("/auth/google/callback", { code: tokenOrCode });
       const { token, refreshToken, user } = response.data;
+      
+      console.log('✅ Google authentication successful for:', user.email);
       this.setAuthData(token, refreshToken, user);
+      
       return user;
     } catch (error: any) {
+      console.error('❌ Google callback error:', error);
       throw new Error(error.response?.data?.error || "Google authentication failed");
     }
   }
 
-  // Login with email/password
+  // ========== EMAIL/PASSWORD AUTH ==========
+
+  // Login user with email/password
   async login(email: string, password: string): Promise<User> {
     try {
       const response = await api.post<LoginResponse>("/auth/login", { email, password });
@@ -143,7 +177,7 @@ class AuthService {
     }
   }
 
-  // Register user
+  // Register user with email/password
   async register(name: string, email: string, password: string): Promise<User> {
     try {
       const response = await api.post<RegisterResponse>("/auth/register", { name, email, password });

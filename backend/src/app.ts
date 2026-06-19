@@ -17,7 +17,6 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import calendarRoutes from './routes/calendarRoutes';
 import noteRoutes from './routes/noteRoutes';
 import notificationRoutes from './routes/notificationRoutes';
-// ❌ REMOVED: import teamRoutes from './routes/teamRoutes';
 
 import { errorHandler } from './middleware/errorHandler';
 import { authLimiter, apiLimiter } from './middleware/rateLimiter';
@@ -42,24 +41,56 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
+// ==================== UPDATED CORS CONFIGURATION ====================
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://velora-app-mu.vercel.app',
+  'https://velora-app-rust.vercel.app',
+  'https://velora-app-ih0n.onrender.com'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      logger.warn(`⚠️ CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
+// ==================== ✅ UPDATED SESSION CONFIGURATION ====================
 // Session middleware (required for Passport)
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(session({
   secret: process.env.JWT_SECRET || 'your-secret-key-change-this',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    // ✅ FIX: secure: false for localhost (HTTP), true for production (HTTPS)
+    secure: isProduction,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    // ✅ ADD: SameSite for better compatibility
+    sameSite: isProduction ? 'none' : 'lax',
   },
+  // ✅ ADD: Name to avoid conflicts
+  name: 'velora.sid',
 }));
+
+// Log session configuration
+logger.info(`🔐 Session configured with secure: ${isProduction}, sameSite: ${isProduction ? 'none' : 'lax'}`);
 
 // Passport middleware
 app.use(passport.initialize());
@@ -115,7 +146,6 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/notifications', notificationRoutes);
-// ❌ REMOVED: app.use('/api/teams', teamRoutes);
 
 // ==================== 404 HANDLER ====================
 app.use((req, res) => {

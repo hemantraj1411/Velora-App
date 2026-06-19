@@ -7,10 +7,10 @@ export const setupPassport = (): void => {
   // Only setup Google OAuth if credentials are provided
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     try {
-      // ✅ FIXED: Use environment variable with production fallback
+      // ✅ Use environment variable with production fallback
       const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
         (process.env.NODE_ENV === 'production' 
-          ? 'https://velora-backend.onrender.com/api/auth/google/callback'  // Your Render URL
+          ? 'https://velora-app-ih0n.onrender.com/api/auth/google/callback'
           : 'http://localhost:5000/api/auth/google/callback');
 
       logger.info(`🔑 Google OAuth Callback URL: ${callbackURL}`);
@@ -21,28 +21,35 @@ export const setupPassport = (): void => {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             callbackURL: callbackURL,
+            // ✅ Add these options for better compatibility
+            passReqToCallback: true,
           },
-          async (accessToken, refreshToken, profile, done) => {
+          async (req, accessToken, refreshToken, profile, done) => {
             try {
+              logger.info(`🔍 Google profile received: ${profile.id} - ${profile.displayName}`);
+              
               // Check if user exists with googleId
               let user = await User.findOne({ googleId: profile.id });
               
               if (!user) {
                 // Check if user exists with email
-                user = await User.findOne({ email: profile.emails?.[0].value });
+                const email = profile.emails?.[0]?.value;
+                if (email) {
+                  user = await User.findOne({ email });
+                }
                 
                 if (user) {
                   // Link Google account to existing user
                   user.googleId = profile.id;
                   await user.save();
-                  logger.info(`Google account linked to existing user: ${user.email}`);
+                  logger.info(`✅ Google account linked to existing user: ${user.email}`);
                 } else {
                   // Create new user
                   user = new User({
-                    name: profile.displayName,
-                    email: profile.emails?.[0].value,
+                    name: profile.displayName || 'Google User',
+                    email: email || `${profile.id}@google.user`,
                     googleId: profile.id,
-                    avatar: profile.photos?.[0]?.value,
+                    avatar: profile.photos?.[0]?.value || '',
                     password: Math.random().toString(36).slice(-16),
                     emailVerified: true,
                     stats: {
@@ -64,13 +71,13 @@ export const setupPassport = (): void => {
                     },
                   });
                   await user.save();
-                  logger.info(`New user created via Google: ${user.email}`);
+                  logger.info(`✅ New user created via Google: ${user.email}`);
                 }
               }
               
               return done(null, user);
             } catch (error) {
-              logger.error('Google OAuth error:', error);
+              logger.error('❌ Google OAuth error:', error);
               return done(error as Error, undefined);
             }
           }
@@ -79,7 +86,7 @@ export const setupPassport = (): void => {
       
       logger.info('✅ Google OAuth configured successfully');
     } catch (error) {
-      logger.error('Failed to configure Google OAuth:', error);
+      logger.error('❌ Failed to configure Google OAuth:', error);
     }
   } else {
     logger.warn('⚠️ Google OAuth credentials not provided. Google login disabled.');
