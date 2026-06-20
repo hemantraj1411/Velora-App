@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 import { 
+  ClipboardDocumentListIcon, 
   CheckCircleIcon, 
   ClockIcon, 
-  FireIcon,
-  SparklesIcon
+  FireIcon 
 } from "@heroicons/react/24/outline";
-import { api } from "@/lib/api";
 
 interface Stats {
   totalTasks: number;
   completedTasks: number;
   pendingTasks: number;
   currentStreak: number;
-  productivityScore: number;
 }
 
 export default function StatsCards() {
@@ -24,7 +22,6 @@ export default function StatsCards() {
     completedTasks: 0,
     pendingTasks: 0,
     currentStreak: 0,
-    productivityScore: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -35,14 +32,7 @@ export default function StatsCards() {
   const fetchStats = async () => {
     try {
       const response = await api.get("/tasks/stats");
-      const userResponse = await api.get("/auth/profile");
-      setStats({
-        totalTasks: response.data.total || 0,
-        completedTasks: response.data.completed || 0,
-        pendingTasks: response.data.pending || 0,
-        currentStreak: userResponse.data.user.stats.currentStreak || 0,
-        productivityScore: response.data.completionRate || 0,
-      });
+      setStats(response.data);
     } catch (error) {
       console.error("Failed to fetch stats:", error);
     } finally {
@@ -54,40 +44,48 @@ export default function StatsCards() {
     {
       title: "Total Tasks",
       value: stats.totalTasks,
-      icon: CheckCircleIcon,
-      color: "from-blue-500 to-cyan-500",
-      bgColor: "bg-blue-500/10",
+      icon: ClipboardDocumentListIcon,
+      color: "from-blue-500/20 to-blue-600/20",
+      textColor: "text-blue-400",
+      borderColor: "border-blue-500/30",
     },
     {
       title: "Completed",
       value: stats.completedTasks,
-      icon: SparklesIcon,
-      color: "from-green-500 to-emerald-500",
-      bgColor: "bg-green-500/10",
+      icon: CheckCircleIcon,
+      color: "from-green-500/20 to-green-600/20",
+      textColor: "text-green-400",
+      borderColor: "border-green-500/30",
     },
     {
       title: "Pending",
       value: stats.pendingTasks,
       icon: ClockIcon,
-      color: "from-orange-500 to-red-500",
-      bgColor: "bg-orange-500/10",
+      color: "from-yellow-500/20 to-yellow-600/20",
+      textColor: "text-yellow-400",
+      borderColor: "border-yellow-500/30",
     },
     {
       title: "Current Streak",
-      value: `${stats.currentStreak} days`,
+      value: stats.currentStreak,
       icon: FireIcon,
-      color: "from-purple-500 to-pink-500",
-      bgColor: "bg-purple-500/10",
+      color: "from-orange-500/20 to-orange-600/20",
+      textColor: "text-orange-400",
+      borderColor: "border-orange-500/30",
+      suffix: " days",
     },
   ];
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="glass rounded-xl p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+          <div
+            key={i}
+            className="bg-[#1a2234] rounded-xl p-4 animate-pulse border border-[#2a3a4a]"
+          >
+            <div className="h-4 bg-gray-700 rounded w-1/2 mb-2" />
+            <div className="h-8 bg-gray-700 rounded w-3/4" />
           </div>
         ))}
       </div>
@@ -95,25 +93,31 @@ export default function StatsCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
       {cards.map((card, index) => (
-        <motion.div
-          key={card.title}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="glass rounded-xl p-6 hover:shadow-xl transition-all"
+        <div
+          key={index}
+          className={`bg-gradient-to-br ${card.color} rounded-xl p-4 border ${card.borderColor} backdrop-blur-sm transition-all hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10`}
         >
           <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{card.title}</p>
-              <p className="text-2xl font-bold mt-2 gradient-text">{card.value}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                {card.title}
+              </p>
+              <p className={`text-2xl md:text-3xl font-bold text-white mt-1`}>
+                {card.value}
+                {card.suffix && (
+                  <span className="text-sm font-normal text-gray-400 ml-1">
+                    {card.suffix}
+                  </span>
+                )}
+              </p>
             </div>
-            <div className={`p-3 rounded-xl ${card.bgColor}`}>
-              <card.icon className={`h-6 w-6 bg-gradient-to-r ${card.color} bg-clip-text text-transparent`} />
+            <div className={`p-2 rounded-lg bg-white/5 flex-shrink-0 ml-2`}>
+              <card.icon className={`h-5 w-5 ${card.textColor}`} />
             </div>
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
