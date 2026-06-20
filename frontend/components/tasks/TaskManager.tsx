@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import TaskCard from "./TaskCard";
 import TaskForm from "./TaskForm";
 import TaskFilters from "./TaskFilters";
@@ -26,13 +26,11 @@ export default function TaskManager() {
   useEffect(() => {
     fetchTasks();
     
-    // Listen for voice-created tasks
     const handleTaskCreated = (event: CustomEvent) => {
       console.log("Task created via voice:", event.detail);
       setTasks(prev => [event.detail, ...prev]);
       toast.success(`Voice task added: "${event.detail.title}"`);
       
-      // Schedule notification for voice-created task
       if (event.detail.status !== 'completed') {
         notificationScheduler.scheduleTask(event.detail);
       }
@@ -58,7 +56,6 @@ export default function TaskManager() {
       const fetchedTasks = response.data.tasks || [];
       setTasks(fetchedTasks);
       
-      // Schedule notifications for pending tasks
       const pendingTasks = fetchedTasks.filter((t: Task) => t.status !== 'completed');
       notificationScheduler.rescheduleAll(pendingTasks);
     } catch (error) {
@@ -77,7 +74,6 @@ export default function TaskManager() {
       setShowForm(false);
       toast.success("Task created successfully");
       
-      // Schedule notification for this task
       if (newTask.status !== 'completed') {
         notificationScheduler.scheduleTask(newTask);
       }
@@ -98,11 +94,9 @@ export default function TaskManager() {
       setEditingTask(null);
       toast.success("Task updated successfully");
       
-      // If task is completed, cancel its notification
       if (taskData.status === 'completed') {
         notificationScheduler.cancelTask(id);
       } else {
-        // Reschedule with updated data
         notificationScheduler.scheduleTask(updatedTask);
       }
       
@@ -120,8 +114,6 @@ export default function TaskManager() {
         await api.delete(`/tasks/${id}`);
         setTasks(tasks.filter(t => t._id !== id));
         toast.success("Task deleted successfully");
-        
-        // Cancel scheduled notification
         notificationScheduler.cancelTask(id);
       } catch (error) {
         console.error("Failed to delete task:", error);
@@ -135,94 +127,112 @@ export default function TaskManager() {
     await handleUpdateTask(task._id, { status: newStatus });
   };
 
-  // Calculate stats
   const completedTasks = tasks.filter(t => t.status === "completed").length;
   const pendingTasks = tasks.filter(t => t.status !== "completed").length;
   const highPriorityTasks = tasks.filter(t => t.priority === "high" && t.status !== "completed").length;
 
   return (
-    <div className="space-y-6">
-      {/* Header with Stats */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold gradient-text">My Tasks</h2>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            {pendingTasks} tasks pending • {completedTasks} completed • {highPriorityTasks} high priority
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold hover:shadow-lg transition flex items-center space-x-2"
-        >
-          <PlusIcon className="h-5 w-5" />
-          <span>New Task</span>
-        </button>
-      </div>
-
-      {/* Filters */}
-      <TaskFilters filters={filters} setFilters={setFilters} />
-
-      {/* Task List */}
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-4 animate-pulse shadow-sm">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f1a2a] to-[#1a2234] p-4 md:p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header with Stats */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#1a2234]/50 backdrop-blur-xl rounded-2xl p-6 border border-[#2a3a4a]">
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
+              My Tasks
+            </h2>
+            <div className="flex flex-wrap gap-3 mt-2">
+              <span className="text-sm text-gray-400 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                {pendingTasks} pending
+              </span>
+              <span className="text-sm text-gray-400 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                {completedTasks} completed
+              </span>
+              <span className="text-sm text-gray-400 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                {highPriorityTasks} high priority
+              </span>
             </div>
-          ))}
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center shadow-sm">
-          <div className="text-6xl mb-4">📋</div>
-          <h3 className="text-lg font-semibold mb-2">No tasks yet</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Create your first task or use voice command to get started
-          </p>
+          </div>
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all transform hover:scale-105 flex items-center gap-2 w-full md:w-auto justify-center"
           >
-            Create Task
+            <PlusIcon className="h-5 w-5" />
+            <span>New Task</span>
           </button>
         </div>
-      ) : (
-        <AnimatePresence>
+
+        {/* Filters */}
+        <TaskFilters filters={filters} setFilters={setFilters} />
+
+        {/* Task List */}
+        {loading ? (
           <div className="space-y-3">
-            {tasks.map((task, index) => (
-              <motion.div
-                key={task._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <TaskCard
-                  task={task}
-                  onToggleComplete={() => handleToggleComplete(task)}
-                  onEdit={() => setEditingTask(task)}
-                  onDelete={() => handleDeleteTask(task._id)}
-                />
-              </motion.div>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-[#1a2234]/50 rounded-2xl p-6 animate-pulse border border-[#2a3a4a]">
+                <div className="h-5 bg-[#2a3a4a] rounded-lg w-1/3 mb-3"></div>
+                <div className="h-3 bg-[#2a3a4a] rounded-lg w-2/3"></div>
+              </div>
             ))}
           </div>
-        </AnimatePresence>
-      )}
+        ) : tasks.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#1a2234]/50 backdrop-blur-xl rounded-2xl p-16 text-center border border-[#2a3a4a]"
+          >
+            <div className="text-7xl mb-6">🚀</div>
+            <h3 className="text-2xl font-semibold text-white mb-3">No tasks yet</h3>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              Create your first task and start your productivity journey
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all"
+            >
+              Create Your First Task
+            </button>
+          </motion.div>
+        ) : (
+          <AnimatePresence>
+            <div className="space-y-3">
+              {tasks.map((task, index) => (
+                <motion.div
+                  key={task._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <TaskCard
+                    task={task}
+                    onToggleComplete={() => handleToggleComplete(task)}
+                    onEdit={() => setEditingTask(task)}
+                    onDelete={() => handleDeleteTask(task._id)}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </AnimatePresence>
+        )}
 
-      {/* Task Form Modals */}
-      <TaskForm
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={handleCreateTask}
-      />
-      
-      {editingTask && (
+        {/* Task Form Modals */}
         <TaskForm
-          isOpen={!!editingTask}
-          onClose={() => setEditingTask(null)}
-          onSubmit={(data) => handleUpdateTask(editingTask._id, data)}
-          initialData={editingTask}
+          isOpen={showForm}
+          onClose={() => setShowForm(false)}
+          onSubmit={handleCreateTask}
         />
-      )}
+        
+        {editingTask && (
+          <TaskForm
+            isOpen={!!editingTask}
+            onClose={() => setEditingTask(null)}
+            onSubmit={(data) => handleUpdateTask(editingTask._id, data)}
+            initialData={editingTask}
+          />
+        )}
+      </div>
     </div>
   );
 }

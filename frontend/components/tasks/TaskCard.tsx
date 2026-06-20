@@ -9,7 +9,8 @@ import {
   ClockIcon, 
   FlagIcon,
   CalendarIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { Task } from "@/types";
 
@@ -20,27 +21,25 @@ interface TaskCardProps {
   onDelete: () => void;
 }
 
-// Helper function to format distance to now
 function formatDistanceToNow(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+  const diffDays = Math.floor(diffMs / 8640000);
 
   if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? "s" : ""} ago`;
-  return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago`;
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
 export default function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
 
-  // Celebration effect when task becomes completed
   useEffect(() => {
     if (task.status === "completed") {
       setShowCelebration(true);
@@ -50,26 +49,23 @@ export default function TaskCard({ task, onToggleComplete, onEdit, onDelete }: T
   }, [task.status]);
 
   const priorityColors = {
-    high: "text-red-600 bg-red-100 dark:bg-red-900/30",
-    medium: "text-orange-600 bg-orange-100 dark:bg-orange-900/30",
-    low: "text-green-600 bg-green-100 dark:bg-green-900/30",
+    high: "border-red-500/50 bg-red-500/10 text-red-400",
+    medium: "border-orange-500/50 bg-orange-500/10 text-orange-400",
+    low: "border-green-500/50 bg-green-500/10 text-green-400",
   };
 
   const statusColors = {
-    pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    "in-progress": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    completed: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    overdue: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
+    "in-progress": "bg-blue-500/10 text-blue-400 border-blue-500/30",
+    completed: "bg-green-500/10 text-green-400 border-green-500/30",
+    overdue: "bg-red-500/10 text-red-400 border-red-500/30",
   };
 
   const getPriorityIcon = () => {
     switch (task.priority) {
-      case "high":
-        return <FlagIcon className="h-4 w-4" />;
-      case "medium":
-        return <ClockIcon className="h-4 w-4" />;
-      default:
-        return <CheckCircleIcon className="h-4 w-4" />;
+      case "high": return <FlagIcon className="h-4 w-4" />;
+      case "medium": return <ClockIcon className="h-4 w-4" />;
+      default: return <CheckCircleIcon className="h-4 w-4" />;
     }
   };
 
@@ -78,14 +74,13 @@ export default function TaskCard({ task, onToggleComplete, onEdit, onDelete }: T
 
   return (
     <>
-      {/* Celebration Animation */}
       {showCelebration && (
         <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1.5, opacity: 1 }}
             exit={{ scale: 2, opacity: 0 }}
-            className="text-6xl"
+            className="text-7xl"
           >
             🎉
           </motion.div>
@@ -97,125 +92,109 @@ export default function TaskCard({ task, onToggleComplete, onEdit, onDelete }: T
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, x: -100 }}
-        className={`relative rounded-xl p-4 transition-all hover:shadow-md ${
+        className={`relative rounded-2xl p-5 transition-all hover:shadow-xl hover:shadow-purple-500/5 ${
           task.status === "completed" 
-            ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" 
-            : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-        } ${isOverdue ? "border-red-300 dark:border-red-800" : ""}`}
+            ? "bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-500/30" 
+            : "bg-[#1a2234] border border-[#2a3a4a]"
+        } ${isOverdue ? "border-red-500/50" : ""}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Completion Badge for completed tasks */}
         {task.status === "completed" && (
           <div className="absolute -top-2 -right-2">
-            <div className="bg-green-500 text-white rounded-full p-1 shadow-lg">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full p-1.5 shadow-lg shadow-green-500/30">
               <CheckBadgeIcon className="h-5 w-5" />
             </div>
           </div>
         )}
 
-        <div className="flex items-start gap-3">
-          {/* Complete Button - Click to mark complete/incomplete */}
+        <div className="flex items-start gap-4">
           <button
             onClick={onToggleComplete}
-            className={`mt-1 flex-shrink-0 transition-transform hover:scale-110 ${
-              task.status === "completed" ? "opacity-100" : "opacity-70 hover:opacity-100"
+            className={`mt-1 flex-shrink-0 transition-all transform hover:scale-110 ${
+              task.status === "completed" ? "opacity-100" : "opacity-60 hover:opacity-100"
             }`}
             title={task.status === "completed" ? "Mark as incomplete" : "Mark as complete"}
           >
             <CheckCircleIcon
-              className={`h-6 w-6 transition-all ${
+              className={`h-7 w-7 transition-all ${
                 task.status === "completed"
-                  ? "text-green-600 drop-shadow-md"
-                  : "text-gray-400 hover:text-green-500"
+                  ? "text-green-500 drop-shadow-lg drop-shadow-green-500/50"
+                  : "text-gray-500 hover:text-green-400"
               }`}
             />
           </button>
 
-          {/* Task Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className={`font-semibold ${task.status === "completed" ? "line-through text-gray-500" : "text-gray-800 dark:text-white"}`}>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className={`text-lg font-semibold ${task.status === "completed" ? "line-through text-gray-500" : "text-white"}`}>
                 {task.title}
               </h3>
               
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={onEdit}
-                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  className="p-2 rounded-xl hover:bg-[#2a3a4a] transition-colors"
                   title="Edit task"
                 >
-                  <PencilIcon className="h-4 w-4 text-gray-500" />
+                  <PencilIcon className="h-4 w-4 text-gray-400 hover:text-white" />
                 </button>
                 <button
                   onClick={onDelete}
-                  className="p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition"
+                  className="p-2 rounded-xl hover:bg-red-500/20 transition-colors"
                   title="Delete task"
                 >
-                  <TrashIcon className="h-4 w-4 text-red-500" />
+                  <TrashIcon className="h-4 w-4 text-gray-400 hover:text-red-400" />
                 </button>
               </div>
             </div>
 
             {task.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+              <p className="text-sm text-gray-400 mt-2 line-clamp-2">
                 {task.description}
               </p>
             )}
 
-            <div className="flex flex-wrap gap-2 mt-3">
-              {/* Priority Badge */}
-              <span className={`text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 ${priorityColors[task.priority]}`}>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <span className={`text-xs px-3 py-1 rounded-full inline-flex items-center gap-1 border ${priorityColors[task.priority]}`}>
                 {getPriorityIcon()}
                 <span className="capitalize">{task.priority}</span>
               </span>
 
-              {/* Category Badge */}
-              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600">
+              <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">
                 {task.category}
               </span>
 
-              {/* Status Badge */}
-              <span className={`text-xs px-2 py-1 rounded-full ${statusColors[task.status]}`}>
-                {task.status === "completed" ? "✓ Completed" : task.status.replace("-", " ")}
+              <span className={`text-xs px-3 py-1 rounded-full border ${statusColors[task.status]}`}>
+                {task.status === "completed" ? "✅ Done" : task.status.replace("-", " ")}
               </span>
 
-              {/* Due Date */}
-              <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+              <span className={`text-xs px-3 py-1 rounded-full flex items-center gap-1 border ${
                 isOverdue 
-                  ? "bg-red-100 dark:bg-red-900/30 text-red-600" 
+                  ? "bg-red-500/10 text-red-400 border-red-500/30" 
                   : task.status === "completed"
-                  ? "bg-green-100 dark:bg-green-900/30 text-green-600"
-                  : "bg-gray-100 dark:bg-gray-700 text-gray-600"
+                  ? "bg-green-500/10 text-green-400 border-green-500/30"
+                  : "bg-gray-500/10 text-gray-400 border-gray-500/30"
               }`}>
                 <CalendarIcon className="h-3 w-3" />
                 <span>{dueDateDistance}</span>
               </span>
             </div>
 
-            {/* Hover instruction for completion */}
             {isHovered && task.status !== "completed" && (
               <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 text-xs text-gray-400 flex items-center gap-1"
+                className="mt-4 pt-3 border-t border-[#2a3a4a]"
               >
-                <CheckCircleIcon className="h-3 w-3" />
-                Click the circle to mark as complete
-              </motion.div>
-            )}
-
-            {/* Direct Complete Button at bottom */}
-            {task.status !== "completed" && (
-              <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={onToggleComplete}
-                  className="w-full text-xs text-center py-1.5 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition flex items-center justify-center gap-1"
+                  className="w-full text-sm py-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium hover:shadow-lg hover:shadow-green-500/25 transition-all flex items-center justify-center gap-2"
                 >
-                  <CheckCircleIcon className="h-3 w-3" />
+                  <CheckCircleIcon className="h-4 w-4" />
                   Mark as Complete
                 </button>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>

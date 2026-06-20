@@ -54,7 +54,6 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
         reminderEnabled: true,
       });
     } else {
-      // Set default date to tomorrow if no time is set
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       setFormData({
@@ -70,7 +69,6 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
     }
   }, [initialData]);
 
-  // Validate the date and time
   const validateDateTime = (date: string, time: string): { valid: boolean; message: string } => {
     if (!date) {
       return { valid: false, message: "Please select a due date" };
@@ -79,16 +77,13 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
     const now = new Date();
     const selectedDate = new Date(date);
     
-    // If time is provided, set the exact time
     if (time) {
       const [hours, minutes] = time.split(':');
       selectedDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
     } else {
-      // If no time, set to end of day (11:59 PM)
       selectedDate.setHours(23, 59, 59, 999);
     }
 
-    // Check if the selected date/time is in the past
     if (selectedDate < now) {
       const diffMs = now.getTime() - selectedDate.getTime();
       const diffMins = Math.floor(diffMs / 60000);
@@ -112,13 +107,11 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate title
     if (!formData.title.trim()) {
       toast.error("Please enter a task title");
       return;
     }
     
-    // Validate date
     const validation = validateDateTime(formData.dueDate, formData.dueTime);
     if (!validation.valid) {
       setTimeError(validation.message);
@@ -133,7 +126,6 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
       await onSubmit(formData);
       onClose();
       
-      // Show success message with time info
       if (formData.dueTime) {
         toast.success(`Task "${formData.title}" will notify you at ${formData.dueTime}! 🔔`);
       } else {
@@ -166,7 +158,6 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
     return null;
   };
 
-  // Get minimum date for date input
   const getMinDate = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -181,108 +172,102 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
           />
           
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative bg-gradient-to-br from-[#0f1a2a] to-[#1a2234] rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-[#2a3a4a]"
           >
-            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
+            <div className="sticky top-0 bg-gradient-to-r from-[#1a2234] to-[#0f1a2a] border-b border-[#2a3a4a] p-5 rounded-t-3xl">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold gradient-text">
-                  {initialData ? "Edit Task" : "Create New Task"}
+                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                  {initialData ? "✏️ Edit Task" : "✨ Create New Task"}
                 </h2>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="p-2 rounded-xl hover:bg-[#2a3a4a] transition-colors"
                 >
-                  <XMarkIcon className="h-5 w-5" />
+                  <XMarkIcon className="h-5 w-5 text-gray-400" />
                 </button>
               </div>
             </div>
 
             <div className="p-6">
-              {/* Time Error Message */}
               {timeError && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                  className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30"
                 >
-                  <p className="text-sm text-red-800 dark:text-red-200">
-                    ❌ {timeError}
-                  </p>
+                  <p className="text-sm text-red-400">❌ {timeError}</p>
                 </motion.div>
               )}
 
-              {/* Time Warning */}
               {!timeError && showTimeWarning && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800"
+                  className="mb-4 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30"
                 >
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    {getTimeWarningMessage()}
-                  </p>
+                  <p className="text-sm text-yellow-400">{getTimeWarningMessage()}</p>
                 </motion.div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Task Title *
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter task title"
+                    placeholder="What do you need to do?"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Description
                   </label>
                   <textarea
-                    placeholder="Add description (optional)"
+                    placeholder="Add some details (optional)"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Priority
                     </label>
                     <select
                       value={formData.priority}
                       onChange={(e) => setFormData({ ...formData, priority: e.target.value as "high" | "medium" | "low" })}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     >
-                      <option value="high">🔴 High - Urgent</option>
-                      <option value="medium">🟠 Medium - Important</option>
-                      <option value="low">🟢 Low - Normal</option>
+                      <option value="high">🔴 High</option>
+                      <option value="medium">🟠 Medium</option>
+                      <option value="low">🟢 Low</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Category
                     </label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     >
                       {categories.map(cat => <option key={cat}>{cat}</option>)}
                     </select>
@@ -291,7 +276,7 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Due Date *
                     </label>
                     <input
@@ -302,13 +287,13 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
                         setFormData({ ...formData, dueDate: e.target.value });
                         setTimeError("");
                       }}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Due Time
                     </label>
                     <input
@@ -319,16 +304,13 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
                         setFormData({ ...formData, dueTime: e.target.value });
                         setTimeError("");
                       }}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Set a time to get notified exactly at that time
-                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Estimated Time (minutes)
                   </label>
                   <input
@@ -338,14 +320,13 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
                     min={5}
                     max={480}
                     step={5}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 rounded-xl border border-[#2a3a4a] bg-[#0f1a2a] text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   />
                 </div>
 
-                {/* Quick Time Selectors */}
                 {!formData.dueTime && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Quick Time Presets
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -364,7 +345,7 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
                             setShowTimeWarning(true);
                             setTimeout(() => setShowTimeWarning(false), 5000);
                           }}
-                          className="px-3 py-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-500 transition"
+                          className="px-3 py-1.5 text-sm rounded-xl border border-[#2a3a4a] text-gray-300 hover:border-purple-500 hover:text-white hover:bg-purple-500/10 transition-all"
                         >
                           {time}
                         </button>
@@ -373,16 +354,15 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
                   </div>
                 )}
 
-                {/* Notification Info */}
                 {formData.dueTime && (
-                  <div className="p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
-                    <div className="flex items-center gap-2">
-                      <BellIcon className="h-5 w-5 text-primary-600" />
+                  <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                    <div className="flex items-center gap-3">
+                      <BellIcon className="h-5 w-5 text-purple-400" />
                       <div>
-                        <p className="text-sm font-medium text-primary-800 dark:text-primary-200">
+                        <p className="text-sm font-medium text-purple-400">
                           Notification Schedule
                         </p>
-                        <p className="text-xs text-primary-600 dark:text-primary-300">
+                        <p className="text-xs text-gray-400">
                           You will be notified at {formData.dueTime} on {new Date(formData.dueDate).toLocaleDateString()}
                         </p>
                       </div>
@@ -393,7 +373,7 @@ export default function TaskForm({ isOpen, onClose, onSubmit, initialData }: Tas
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 rounded-lg bg-gradient-to-r from-primary-600 to-primary-500 text-white font-semibold hover:shadow-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-2">
