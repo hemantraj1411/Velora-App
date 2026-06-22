@@ -7,7 +7,7 @@ import {
   ChevronRightIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  CalendarDaysIcon
+  CalendarIcon
 } from "@heroicons/react/24/outline";
 import { api } from "@/lib/api";
 import { Task } from "@/types";
@@ -53,6 +53,7 @@ export default function CalendarView() {
 
   const getTasksForDate = (date: Date): Task[] => {
     return tasks.filter(task => {
+      if (!task.dueDate) return false;
       const taskDate = new Date(task.dueDate);
       return taskDate.toDateString() === date.toDateString();
     });
@@ -156,7 +157,7 @@ export default function CalendarView() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-orange-500';
+      case 'medium': return 'bg-yellow-500';
       case 'low': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
@@ -165,117 +166,53 @@ export default function CalendarView() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', label: '✓ Completed' };
+        return { bg: 'bg-green-500/20', text: 'text-green-400', label: '✅ Done' };
       case 'in-progress':
-        return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', label: 'In Progress' };
+        return { bg: 'bg-blue-500/20', text: 'text-blue-400', label: '🔄 In Progress' };
       case 'pending':
-        return { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-400', label: 'Pending' };
+        return { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: '⏳ Pending' };
       case 'overdue':
-        return { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', label: 'Overdue' };
+        return { bg: 'bg-red-500/20', text: 'text-red-400', label: '⚠️ Overdue' };
       default:
-        return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700 dark:text-gray-400', label: status };
+        return { bg: 'bg-gray-500/20', text: 'text-gray-400', label: status };
     }
-  };
-
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter(t => t.status === 'completed').length,
-    pending: tasks.filter(t => t.status !== 'completed').length,
-    overdue: tasks.filter(t => t.status === 'overdue').length
   };
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 animate-pulse">
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
-        <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
-      </div>
+      <div className="bg-[#1a2234] rounded-xl p-4 animate-pulse border border-[#2a3a4a] h-80"></div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.total}</p>
-              <p className="text-sm text-gray-500">Total Tasks</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              <p className="text-sm text-gray-500">Completed</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-orange-600">{stats.pending}</p>
-              <p className="text-sm text-gray-500">Pending</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-              <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-              <p className="text-sm text-gray-500">Overdue</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div className="space-y-4">
+      {/* ✅ Calendar Only - NO STATS HERE */}
+      <div className="bg-[#1a2234] rounded-xl border border-[#2a3a4a] overflow-hidden">
         {/* Navigation Bar */}
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
+        <div className="p-3 md:p-4 border-b border-[#2a3a4a]">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
               <button
                 onClick={goToToday}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                className="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition flex-shrink-0"
               >
                 Today
               </button>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => viewMode === 'month' ? navigateMonth('prev') : viewMode === 'week' ? navigateWeek('prev') : navigateDay('prev')}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  className="p-1.5 md:p-2 rounded-lg hover:bg-[#2a3a4a] transition text-gray-400 hover:text-white"
                 >
-                  <ChevronLeftIcon className="h-5 w-5" />
+                  <ChevronLeftIcon className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
                 <button
                   onClick={() => viewMode === 'month' ? navigateMonth('next') : viewMode === 'week' ? navigateWeek('next') : navigateDay('next')}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  className="p-1.5 md:p-2 rounded-lg hover:bg-[#2a3a4a] transition text-gray-400 hover:text-white"
                 >
-                  <ChevronRightIcon className="h-5 w-5" />
+                  <ChevronRightIcon className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
               </div>
-              <h2 className="text-xl font-semibold ml-2">
+              <h2 className="text-sm md:text-lg font-semibold text-white truncate flex-1 text-center sm:text-left">
                 {viewMode === 'month' && formatMonthYear(currentDate)}
                 {viewMode === 'week' && formatWeekRange(currentDate)}
                 {viewMode === 'day' && formatDay(currentDate)}
@@ -283,54 +220,36 @@ export default function CalendarView() {
             </div>
             
             {/* View Toggle */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition ${
-                  viewMode === 'month'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                Month
-              </button>
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition ${
-                  viewMode === 'week'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                Week
-              </button>
-              <button
-                onClick={() => setViewMode('day')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition ${
-                  viewMode === 'day'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                Day
-              </button>
+            <div className="flex items-center gap-1 bg-[#0f1a2a] rounded-lg p-0.5 md:p-1 w-full sm:w-auto">
+              {['month', 'week', 'day'].map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode as ViewMode)}
+                  className={`flex-1 sm:flex-none px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-md transition capitalize ${
+                    viewMode === mode
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
+                      : 'text-gray-400 hover:text-white hover:bg-[#2a3a4a]'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Month View */}
         {viewMode === 'month' && (
-          <div className="p-4">
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+          <div className="p-2 md:p-4 overflow-x-auto">
+            <div className="grid grid-cols-7 gap-0.5 md:gap-1 mb-1 md:mb-2">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                <div key={day} className="text-center text-[10px] md:text-xs font-medium text-gray-500 py-1 md:py-2 uppercase tracking-wider">
                   {day}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5 md:gap-1">
               {getTasksForMonth().map((day, index) => {
-                const hasHighPriority = day.tasks.some(t => t.priority === 'high' && t.status !== 'completed');
                 const isSelected = selectedDate && day.date.toDateString() === selectedDate.toDateString();
                 
                 return (
@@ -338,33 +257,33 @@ export default function CalendarView() {
                     key={index}
                     onClick={() => setSelectedDate(day.date)}
                     className={`
-                      min-h-[100px] p-2 rounded-lg text-left transition-all
-                      ${!day.isCurrentMonth ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}
-                      ${day.isToday ? 'ring-2 ring-primary-500' : ''}
-                      ${isSelected ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}
+                      min-h-[50px] md:min-h-[80px] lg:min-h-[100px] p-1 md:p-2 rounded-lg text-left transition-all
+                      ${!day.isCurrentMonth ? 'opacity-30' : ''}
+                      ${day.isToday ? 'ring-1 md:ring-2 ring-purple-500' : ''}
+                      ${isSelected ? 'bg-purple-500/20 ring-1 md:ring-2 ring-purple-500' : 'hover:bg-[#2a3a4a]'}
                     `}
                   >
                     <div className="flex justify-between items-start">
-                      <span className={`text-sm font-medium ${day.isToday ? 'text-primary-600 font-bold' : ''}`}>
+                      <span className={`text-xs md:text-sm font-medium ${day.isToday ? 'text-purple-400' : 'text-white'}`}>
                         {day.date.getDate()}
                       </span>
                       {day.tasks.length > 0 && (
-                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600">
+                        <span className="text-[8px] md:text-xs px-1 md:px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300">
                           {day.tasks.length}
                         </span>
                       )}
                     </div>
-                    <div className="mt-1 space-y-1">
+                    <div className="mt-0.5 md:mt-1 space-y-0.5">
                       {day.tasks.slice(0, 2).map(task => (
-                        <div key={task._id} className="flex items-center gap-1">
-                          <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
-                          <p className="text-xs truncate text-gray-600 dark:text-gray-400">
+                        <div key={task._id} className="flex items-center gap-0.5 md:gap-1">
+                          <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${getPriorityColor(task.priority)}`} />
+                          <p className="text-[8px] md:text-xs truncate text-gray-300">
                             {task.title}
                           </p>
                         </div>
                       ))}
                       {day.tasks.length > 2 && (
-                        <p className="text-xs text-gray-400">+{day.tasks.length - 2} more</p>
+                        <p className="text-[6px] md:text-xs text-gray-500">+{day.tasks.length - 2}</p>
                       )}
                     </div>
                   </button>
@@ -376,24 +295,24 @@ export default function CalendarView() {
 
         {/* Week View */}
         {viewMode === 'week' && (
-          <div className="overflow-x-auto p-4">
-            <div className="min-w-[800px]">
-              <div className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700">
-                <div className="p-3 text-center bg-gray-50 dark:bg-gray-800/50 font-medium text-gray-500">
+          <div className="overflow-x-auto p-2 md:p-4">
+            <div className="min-w-[600px] md:min-w-[800px]">
+              <div className="grid grid-cols-8 border-b border-[#2a3a4a]">
+                <div className="p-1 md:p-3 text-center bg-[#0f1a2a] font-medium text-gray-500 text-[10px] md:text-sm">
                   Time
                 </div>
                 {getTasksForWeek(currentDate).map((day, idx) => (
-                  <div key={idx} className="p-3 text-center bg-gray-50 dark:bg-gray-800/50">
-                    <p className="font-medium text-gray-800 dark:text-white">
+                  <div key={idx} className="p-1 md:p-3 text-center bg-[#0f1a2a]">
+                    <p className="font-medium text-white text-[10px] md:text-sm">
                       {day.date.toLocaleDateString('en-US', { weekday: 'short' })}
                     </p>
-                    <p className="text-sm text-gray-500">{day.date.getDate()}</p>
+                    <p className="text-[8px] md:text-xs text-gray-400">{day.date.getDate()}</p>
                   </div>
                 ))}
               </div>
-              {[9, 10, 11, 12, 13, 14, 15, 16, 17].map(hour => (
-                <div key={hour} className="grid grid-cols-8 border-b border-gray-100 dark:border-gray-700">
-                  <div className="p-3 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50">
+              {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(hour => (
+                <div key={hour} className="grid grid-cols-8 border-b border-[#2a3a4a]">
+                  <div className="p-1 md:p-3 text-[8px] md:text-xs text-gray-500 bg-[#0f1a2a]">
                     {hour}:00
                   </div>
                   {getTasksForWeek(currentDate).map((day, idx) => {
@@ -402,9 +321,9 @@ export default function CalendarView() {
                       return taskHour === hour;
                     });
                     return (
-                      <div key={idx} className="p-2 min-h-[60px]">
+                      <div key={idx} className="p-0.5 md:p-1 min-h-[30px] md:min-h-[50px]">
                         {hourTasks.map(task => (
-                          <div key={task._id} className="text-xs p-1 rounded bg-primary-100 dark:bg-primary-900/30 mb-1 truncate">
+                          <div key={task._id} className="text-[6px] md:text-xs p-0.5 md:p-1.5 rounded bg-purple-500/20 text-purple-300 mb-0.5 truncate">
                             {task.title}
                           </div>
                         ))}
@@ -419,29 +338,29 @@ export default function CalendarView() {
 
         {/* Day View */}
         {viewMode === 'day' && (
-          <div className="p-4">
-            <div className="space-y-4">
+          <div className="p-2 md:p-4">
+            <div className="space-y-1 md:space-y-2">
               {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(hour => {
                 const hourTasks = getTasksForDate(currentDate).filter(t => {
                   const taskHour = t.dueTime ? parseInt(t.dueTime.split(':')[0]) : null;
                   return taskHour === hour;
                 });
                 return (
-                  <div key={hour} className="flex gap-4">
-                    <div className="w-16 text-right text-sm text-gray-500 py-2">
+                  <div key={hour} className="flex gap-2 md:gap-4">
+                    <div className="w-12 md:w-16 text-right text-[8px] md:text-xs text-gray-500 py-1 md:py-2 flex-shrink-0">
                       {hour}:00
                     </div>
-                    <div className="flex-1 border-l border-gray-200 dark:border-gray-700 pl-4 min-h-[60px]">
+                    <div className="flex-1 border-l border-[#2a3a4a] pl-2 md:pl-4 min-h-[30px] md:min-h-[50px]">
                       {hourTasks.map(task => (
-                        <div key={task._id} className="mb-2 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border-l-4 border-primary-500">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium text-gray-800 dark:text-white">{task.title}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full text-white ${getPriorityColor(task.priority)}`}>
+                        <div key={task._id} className="mb-1 md:mb-2 p-1.5 md:p-3 rounded-lg bg-purple-500/10 border-l-2 md:border-l-4 border-purple-500">
+                          <div className="flex items-center justify-between gap-1 md:gap-2">
+                            <p className="font-medium text-white text-[10px] md:text-sm truncate">{task.title}</p>
+                            <span className={`text-[6px] md:text-xs px-1 md:px-2 py-0.5 rounded-full text-white ${getPriorityColor(task.priority)} flex-shrink-0`}>
                               {task.priority}
                             </span>
                           </div>
                           {task.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{task.description}</p>
+                            <p className="text-[8px] md:text-xs text-gray-400 mt-0.5 md:mt-1 truncate">{task.description}</p>
                           )}
                         </div>
                       ))}
@@ -461,59 +380,59 @@ export default function CalendarView() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
+            className="bg-[#1a2234] rounded-xl border border-[#2a3a4a] overflow-hidden"
           >
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-semibold">
+            <div className="p-3 md:p-4 border-b border-[#2a3a4a] flex justify-between items-center">
+              <div className="min-w-0">
+                <h3 className="text-sm md:text-lg font-semibold text-white truncate">
                   {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs md:text-sm text-gray-400">
                   {getTasksForDate(selectedDate).length} tasks scheduled
                 </p>
               </div>
               <button
                 onClick={() => setSelectedDate(null)}
-                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                className="p-1 rounded-lg hover:bg-[#2a3a4a] transition text-gray-400 hover:text-white flex-shrink-0"
               >
-                <ChevronUpIcon className="h-5 w-5" />
+                <ChevronUpIcon className="h-4 w-4 md:h-5 md:w-5" />
               </button>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-3 md:p-4 space-y-2 md:space-y-3 max-h-60 md:max-h-96 overflow-y-auto">
               {getTasksForDate(selectedDate).length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No tasks scheduled for this day</p>
+                <div className="text-center py-4 md:py-8">
+                  <p className="text-sm md:text-base text-gray-400">No tasks scheduled for this day</p>
                 </div>
               ) : (
                 getTasksForDate(selectedDate).map(task => {
                   const statusBadge = getStatusBadge(task.status);
                   return (
-                    <div key={task._id} className="p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:shadow-sm transition">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
-                            <p className={`font-medium ${task.status === 'completed' ? 'line-through text-gray-400' : ''}`}>
+                    <div key={task._id} className="p-2 md:p-3 rounded-lg border border-[#2a3a4a] hover:bg-[#2a3a4a] transition">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
+                            <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full flex-shrink-0 ${getPriorityColor(task.priority)}`} />
+                            <p className={`font-medium text-xs md:text-sm text-white truncate ${task.status === 'completed' ? 'line-through text-gray-500' : ''}`}>
                               {task.title}
                             </p>
                           </div>
                           {task.description && (
-                            <p className="text-sm text-gray-500 mt-1">{task.description}</p>
+                            <p className="text-[10px] md:text-xs text-gray-400 mt-0.5 md:mt-1 truncate">{task.description}</p>
                           )}
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className={`text-xs px-2 py-1 rounded-full ${statusBadge.bg} ${statusBadge.text}`}>
+                          <div className="flex flex-wrap items-center gap-1 md:gap-3 mt-1 md:mt-2">
+                            <span className={`text-[8px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full ${statusBadge.bg} ${statusBadge.text}`}>
                               {statusBadge.label}
                             </span>
                             {task.dueTime && (
-                              <span className="text-xs text-gray-500">🕐 {task.dueTime}</span>
+                              <span className="text-[8px] md:text-xs text-gray-500">🕐 {task.dueTime}</span>
                             )}
                           </div>
                         </div>
                         <button
                           onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
-                          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                          className="p-1 rounded-lg hover:bg-[#2a3a4a] transition text-gray-400 hover:text-white flex-shrink-0"
                         >
-                          <ChevronDownIcon className="h-4 w-4" />
+                          <ChevronDownIcon className={`h-3 w-3 md:h-4 md:w-4 transition-transform ${expandedTask === task._id ? 'rotate-180' : ''}`} />
                         </button>
                       </div>
                       
@@ -521,12 +440,18 @@ export default function CalendarView() {
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
-                          className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700"
+                          className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-[#2a3a4a]"
                         >
-                          <div className="flex gap-2">
-                            <button className="text-sm text-primary-600 hover:underline">Edit</button>
-                            <button className="text-sm text-green-600 hover:underline">Mark Complete</button>
-                            <button className="text-sm text-red-600 hover:underline">Delete</button>
+                          <div className="flex flex-wrap gap-2 md:gap-3">
+                            <button className="text-[10px] md:text-xs text-purple-400 hover:text-purple-300 transition">
+                              ✏️ Edit
+                            </button>
+                            <button className="text-[10px] md:text-xs text-green-400 hover:text-green-300 transition">
+                              ✅ Complete
+                            </button>
+                            <button className="text-[10px] md:text-xs text-red-400 hover:text-red-300 transition">
+                              🗑️ Delete
+                            </button>
                           </div>
                         </motion.div>
                       )}

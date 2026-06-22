@@ -122,11 +122,6 @@ export default function TaskManager() {
     }
   };
 
-  const handleToggleComplete = async (task: Task) => {
-    const newStatus = task.status === "completed" ? "pending" : "completed";
-    await handleUpdateTask(task._id, { status: newStatus });
-  };
-
   const completedTasks = tasks.filter(t => t.status === "completed").length;
   const pendingTasks = tasks.filter(t => t.status !== "completed").length;
   const highPriorityTasks = tasks.filter(t => t.priority === "high" && t.status !== "completed").length;
@@ -207,9 +202,8 @@ export default function TaskManager() {
                 >
                   <TaskCard
                     task={task}
-                    onToggleComplete={() => handleToggleComplete(task)}
-                    onEdit={() => setEditingTask(task)}
-                    onDelete={() => handleDeleteTask(task._id)}
+                    onUpdate={handleUpdateTask}
+                    onDelete={handleDeleteTask}
                   />
                 </motion.div>
               ))}

@@ -8,6 +8,7 @@ import {
   ClockIcon, 
   FireIcon 
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface Stats {
   totalTasks: number;
@@ -31,12 +32,66 @@ export default function StatsCards() {
 
   const fetchStats = async () => {
     try {
+      setLoading(true);
+      // Try to get stats from the API
       const response = await api.get("/tasks/stats");
-      setStats(response.data);
-    } catch (error) {
+      console.log("Stats response:", response.data);
+      
+      // Handle different response formats
+      let statsData = response.data;
+      if (response.data.data) {
+        statsData = response.data.data;
+      }
+      
+      setStats({
+        totalTasks: statsData.totalTasks || statsData.total || 0,
+        completedTasks: statsData.completedTasks || statsData.completed || 0,
+        pendingTasks: statsData.pendingTasks || statsData.pending || 0,
+        currentStreak: statsData.currentStreak || statsData.streak || 0,
+      });
+    } catch (error: any) {
       console.error("Failed to fetch stats:", error);
+      // If the endpoint doesn't exist, try to calculate from tasks
+      await fetchTasksAndCalculateStats();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fallback: Calculate stats from tasks if /stats endpoint doesn't exist
+  const fetchTasksAndCalculateStats = async () => {
+    try {
+      const response = await api.get("/tasks");
+      const tasks = response.data.tasks || response.data || [];
+      
+      const totalTasks = tasks.length;
+      const completedTasks = tasks.filter((t: any) => 
+        t.status === 'completed' || t.completed === true
+      ).length;
+      const pendingTasks = totalTasks - completedTasks;
+      
+      // Calculate streak from habits or tasks
+      let streak = 0;
+      try {
+        const habitResponse = await api.get("/habits");
+        const habits = habitResponse.data.habits || habitResponse.data || [];
+        if (habits.length > 0) {
+          streak = habits.reduce((max: number, h: any) => Math.max(max, h.streak || 0), 0);
+        }
+      } catch (habitError) {
+        // Habits endpoint might not exist
+        console.debug("Habits endpoint not available");
+      }
+      
+      setStats({
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+        currentStreak: streak,
+      });
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+      toast.error("Could not load stats");
     }
   };
 
@@ -45,34 +100,38 @@ export default function StatsCards() {
       title: "Total Tasks",
       value: stats.totalTasks,
       icon: ClipboardDocumentListIcon,
-      color: "from-blue-500/20 to-blue-600/20",
-      textColor: "text-blue-400",
-      borderColor: "border-blue-500/30",
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/20",
+      iconBg: "bg-blue-500/20",
+      iconColor: "text-blue-400",
     },
     {
       title: "Completed",
       value: stats.completedTasks,
       icon: CheckCircleIcon,
-      color: "from-green-500/20 to-green-600/20",
-      textColor: "text-green-400",
-      borderColor: "border-green-500/30",
+      bg: "bg-green-500/10",
+      border: "border-green-500/20",
+      iconBg: "bg-green-500/20",
+      iconColor: "text-green-400",
     },
     {
       title: "Pending",
       value: stats.pendingTasks,
       icon: ClockIcon,
-      color: "from-yellow-500/20 to-yellow-600/20",
-      textColor: "text-yellow-400",
-      borderColor: "border-yellow-500/30",
+      bg: "bg-yellow-500/10",
+      border: "border-yellow-500/20",
+      iconBg: "bg-yellow-500/20",
+      iconColor: "text-yellow-400",
     },
     {
       title: "Current Streak",
       value: stats.currentStreak,
       icon: FireIcon,
-      color: "from-orange-500/20 to-orange-600/20",
-      textColor: "text-orange-400",
-      borderColor: "border-orange-500/30",
-      suffix: " days",
+      bg: "bg-orange-500/10",
+      border: "border-orange-500/20",
+      iconBg: "bg-orange-500/20",
+      iconColor: "text-orange-400",
+      suffix: stats.currentStreak !== 1 ? " days" : " day",
     },
   ];
 
@@ -84,8 +143,8 @@ export default function StatsCards() {
             key={i}
             className="bg-[#1a2234] rounded-xl p-4 animate-pulse border border-[#2a3a4a]"
           >
-            <div className="h-4 bg-gray-700 rounded w-1/2 mb-2" />
-            <div className="h-8 bg-gray-700 rounded w-3/4" />
+            <div className="h-3 bg-gray-700 rounded w-1/2 mb-2" />
+            <div className="h-7 bg-gray-700 rounded w-3/4" />
           </div>
         ))}
       </div>
@@ -97,14 +156,14 @@ export default function StatsCards() {
       {cards.map((card, index) => (
         <div
           key={index}
-          className={`bg-gradient-to-br ${card.color} rounded-xl p-4 border ${card.borderColor} backdrop-blur-sm transition-all hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10`}
+          className={`${card.bg} rounded-xl p-4 border ${card.border} transition-all hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10`}
         >
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wider truncate">
                 {card.title}
               </p>
-              <p className={`text-2xl md:text-3xl font-bold text-white mt-1`}>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1">
                 {card.value}
                 {card.suffix && (
                   <span className="text-sm font-normal text-gray-400 ml-1">
@@ -113,8 +172,8 @@ export default function StatsCards() {
                 )}
               </p>
             </div>
-            <div className={`p-2 rounded-lg bg-white/5 flex-shrink-0 ml-2`}>
-              <card.icon className={`h-5 w-5 ${card.textColor}`} />
+            <div className={`${card.iconBg} p-2.5 rounded-lg flex-shrink-0 ml-2`}>
+              <card.icon className={`h-5 w-5 ${card.iconColor}`} />
             </div>
           </div>
         </div>

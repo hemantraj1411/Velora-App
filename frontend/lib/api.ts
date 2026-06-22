@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 
   (process.env.NODE_ENV === 'production' 
     ? 'https://velora-app-oo8o.onrender.com/api'  // ✅ CORRECT Render URL
-    : 'http://localhost:5000/api');               // Development fallback
+    : 'http://localhost:5001/api');               // ✅ FIXED: Changed from 5000 to 5001
 
 // Log the API URL for debugging
 console.log(`🌐 API_URL (${process.env.NODE_ENV}):`, API_URL);
@@ -17,7 +17,7 @@ export const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 30000,
+  timeout: 15000, // ✅ Reduced from 30000 to 15 seconds for better UX
   withCredentials: true,
 });
 
@@ -68,9 +68,9 @@ api.interceptors.response.use(
       });
     }
 
-    // Handle Network Errors
-    if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
-      toast.error('Network error. Please check your connection.');
+    // Handle Network Errors / Timeout
+    if (error.code === 'ECONNABORTED' || error.message === 'Network Error' || error.message?.includes('timeout')) {
+      toast.error('Server not responding. Please check your connection.');
       return Promise.reject(error);
     }
 
@@ -141,7 +141,7 @@ api.interceptors.response.use(
 
     // Handle 422 Validation Error
     if (error.response?.status === 422) {
-      const message = error.response?.data?.error || 'Validation failed. Please check your input.';
+      const message = error.response?.data?.error || error.response?.data?.message || 'Validation failed. Please check your input.';
       toast.error(message);
       return Promise.reject(error);
     }
@@ -159,7 +159,10 @@ api.interceptors.response.use(
     }
 
     // Handle other errors with custom message
-    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'An unexpected error occurred.';
+    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        error.message || 
+                        'An unexpected error occurred.';
     
     // Only show toast for non-GET requests that aren't 404
     if (originalRequest?.method?.toLowerCase() !== 'get' || error.response?.status !== 404) {

@@ -32,27 +32,28 @@ export interface User {
 export interface Task {
   _id: string;
   title: string;
-  description: string;
+  description?: string; // ✅ Made optional
   priority: 'high' | 'medium' | 'low';
-  category: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'overdue';
-  dueDate: string;
+  category?: string; // ✅ Made optional
+  status: 'pending' | 'in-progress' | 'completed' | 'review' | 'overdue';
+  dueDate?: string; // ✅ Made optional
   dueTime?: string;
-  subtasks: { title: string; completed: boolean }[];
-  attachments: { filename: string; url: string; size: number; type: string }[];
-  tags: string[];
-  estimatedTime: number;
-  actualTime?: number;
+  subtasks?: { title: string; completed: boolean }[]; // ✅ Made optional
+  attachments?: { filename: string; url: string; size: number; type: string }[]; // ✅ Made optional
+  tags?: string[]; // ✅ Made optional
+  estimatedTime?: number; // ✅ Made optional
+  actualTime?: number; // ✅ Made optional
   completedAt?: string;
-  order: number;
+  order?: number; // ✅ Made optional
   createdAt: string;
   updatedAt: string;
+  userId?: string; // ✅ Added userId
 }
 
 export interface Habit {
   _id: string;
   name: string;
-  description: string;
+  description?: string; // ✅ Made optional
   frequency: 'daily' | 'weekly' | 'monthly';
   targetDays: number[];
   reminderTime?: string;
@@ -70,7 +71,7 @@ export interface Habit {
 export interface Goal {
   _id: string;
   title: string;
-  description: string;
+  description?: string; // ✅ Made optional
   targetDate: string;
   progress: number;
   milestones: { 
